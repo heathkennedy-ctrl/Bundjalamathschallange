@@ -41,7 +41,21 @@ function timeText(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')
 function displayClock(){byId('clock').textContent=timeText(remaining);byId('clock').classList.toggle('warning',remaining<=10);}
 function stopTimer(){if(interval!==null){window.clearInterval(interval);interval=null;}}
 function tick(){remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));displayClock();if(remaining===0){stopTimer();running=false;finished=true;byId('start').disabled=true;byId('status').textContent='Time is up! '+correct+' correct answers.';byId('feedback2').textContent='Final score: '+correct;}}
-function startGame(){if(running||finished)return;running=true;byId('start').disabled=true;byId('status').textContent=byId('mode').value==='clock'?'Go! Answer as many as you can.':'Go! First team to the target wins.';
+function startGame(){
+ if(running||finished)return;
+ // The visible preview is replaced by a different question on Start.
+ // Keep the board visible before play; do not begin with a blank board.
+ version++;
+ for(let i=0;i<3;i++){
+  const previous=boards[i];
+  let next,attempts=0;
+  do{next=makeQuestion();attempts++;}
+  while(attempts<100 && next.op===previous.op && next.nums.join(',')===previous.nums.join(','));
+  next.score=previous.score;
+  boards[i]=next;
+  renderBoard(i);
+ }
+ running=true;byId('start').disabled=true;byId('status').textContent=byId('mode').value==='clock'?'Go! Answer as many as you can.':'Go! First team to the target wins.';
  if(byId('mode').value==='clock'){deadline=Date.now()+remaining*1000;stopTimer();interval=window.setInterval(tick,100);}}
 function resetGame(){version++;stopTimer();running=false;finished=false;correct=0;remaining=Number(byId('minutes').value)*60;boards=[makeQuestion(),makeQuestion(),makeQuestion()];for(let i=0;i<3;i++)renderBoard(i);
  let clockMode=byId('mode').value==='clock';byId('timer-info').classList.toggle('hidden',!clockMode);byId('solo-board').classList.toggle('hidden',!clockMode);byId('race-boards').classList.toggle('hidden',clockMode);byId('race-setting').classList.toggle('hidden',clockMode);byId('time-setting').classList.toggle('hidden',!clockMode);
@@ -54,6 +68,7 @@ document.querySelectorAll('[data-clear]').forEach(button=>button.addEventListene
 resetGame();
 })();
 </script></body></html>
+
 
 
 
